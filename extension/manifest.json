@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Add to mpv",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Right-click a YouTube video or link to send it to your mpv instance via yt-dlp.",
-  "permissions": ["contextMenus", "tabs"],
+  "permissions": ["contextMenus", "scripting", "activeTab"],
   "background": {
     "service_worker": "background.js"
   }

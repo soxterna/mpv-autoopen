@@ -40,22 +40,38 @@ function buildMenus() {
 chrome.runtime.onInstalled.addListener(buildMenus);
 chrome.runtime.onStartup.addListener(buildMenus);
 
+// Runs INSIDE the YouTube page: click a real <a href="mpv:..."> link. A genuine
+// in-page anchor click is what reliably makes the browser hand the URL to the
+// OS protocol handler; it does not navigate or reload the page. (Opening a
+// background tab, by contrast, gets its external-app launch suppressed by
+// Chrome -- that was the bug where a blank window flashed and nothing ran.)
+function clickMpvLink(target) {
+  const a = document.createElement("a");
+  a.href = target;
+  a.style.display = "none";
+  (document.body || document.documentElement).appendChild(a);
+  a.click();
+  a.remove();
+}
+
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   // Prefer the specific link that was clicked; else the current page URL.
-  const url = info.linkUrl || info.pageUrl || (tab && tab.url);
-  if (!url) return;
+  const url = info.linkUrl || info.pageUrl;
+  if (!url || !tab || tab.id == null) return;
 
   // Single colon + fully percent-encoded payload keeps Windows from trying to
   // parse a "host" and keeps the command line free of spaces/quotes/&.
   const target = "mpv:" + encodeURIComponent(url);
 
-  // Fire the OS handler from a throwaway background tab, then close it. This
-  // never disturbs the YouTube page the user is on. The first time, the
-  // browser asks permission to open the mpv: link (tick "Always allow").
-  chrome.tabs.create({ url: target, active: false }, (t) => {
-    void chrome.runtime.lastError;
-    if (t && t.id != null) {
-      setTimeout(() => chrome.tabs.remove(t.id, () => void chrome.runtime.lastError), 1000);
-    }
+  // "scripting" + "activeTab" (granted by the context-menu click) let us inject
+  // the click into the current tab without any broad host permissions.
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: clickMpvLink,
+    args: [target]
+  }).catch(() => {
+    // Fallback for older engines: navigate the active tab to the scheme. The
+    // external handler fires and the page stays put.
+    chrome.tabs.update(tab.id, { url: target }, () => void chrome.runtime.lastError);
   });
 });

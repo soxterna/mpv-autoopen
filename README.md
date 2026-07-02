@@ -135,9 +135,24 @@ you launched manually without the pipe), it just opens a fresh window.
 
 ## Troubleshooting
 
-- **Nothing happens from the browser.** Check the log at
-  `mpv-autoopen.log` in this folder — every request is recorded there. Also make
-  sure you allowed the `mpv:` protocol prompt.
+- **After updating the extension files, reload it.** Go to `chrome://extensions`
+  and click the ↻ reload icon on the “Add to mpv” card (or remove and re-add
+  it). The context menu uses the reloaded code only after that.
+- **Nothing happens from the browser.** First find out *which half* is failing:
+  1. **Test the protocol chain alone** — paste this into the address bar and
+     press Enter:
+     `mpv:https%3A%2F%2Fyoutu.be%2FdQw4w9WgXcQ`
+     Allow the “Open mpv-open?” prompt (tick **Always allow**). If mpv opens,
+     the protocol/scripts are fine and the problem was the extension — reload it
+     (above). If **nothing** happens here, re-run `install.ps1` and check the
+     log below.
+  2. **Check the log** at `mpv-autoopen.log` in this folder — every request the
+     script receives is recorded there. If the file never gains a line, the
+     `mpv:` handler isn’t reaching the script (re-run `install.ps1`). If it logs
+     a line but mpv doesn’t start, it’s an mpv/yt-dlp issue (below).
+  > Earlier this tool briefly flashed a blank tab and did nothing — that was a
+  > bug (Chrome blocks external-app launches from background tabs). Fixed in
+  > extension **v1.1.0**; make sure you reloaded it.
 - **“mpv.exe not found”.** Set `$MpvPath` in `config.ps1` to the correct path
   (or re-run `install.ps1 -Force -MpvPath "..."`).
 - **YouTube plays but fails after a while / with errors.** Update yt-dlp:
