@@ -40,20 +40,6 @@ function buildMenus() {
 chrome.runtime.onInstalled.addListener(buildMenus);
 chrome.runtime.onStartup.addListener(buildMenus);
 
-// Runs INSIDE the YouTube page: click a real <a href="mpv:..."> link. A genuine
-// in-page anchor click is what reliably makes the browser hand the URL to the
-// OS protocol handler; it does not navigate or reload the page. (Opening a
-// background tab, by contrast, gets its external-app launch suppressed by
-// Chrome -- that was the bug where a blank window flashed and nothing ran.)
-function clickMpvLink(target) {
-  const a = document.createElement("a");
-  a.href = target;
-  a.style.display = "none";
-  (document.body || document.documentElement).appendChild(a);
-  a.click();
-  a.remove();
-}
-
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   // Prefer the specific link that was clicked; else the current page URL.
   const url = info.linkUrl || info.pageUrl;
@@ -63,15 +49,14 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   // parse a "host" and keeps the command line free of spaces/quotes/&.
   const target = "mpv:" + encodeURIComponent(url);
 
-  // "scripting" + "activeTab" (granted by the context-menu click) let us inject
-  // the click into the current tab without any broad host permissions.
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    func: clickMpvLink,
-    args: [target]
-  }).catch(() => {
-    // Fallback for older engines: navigate the active tab to the scheme. The
-    // external handler fires and the page stays put.
-    chrome.tabs.update(tab.id, { url: target }, () => void chrome.runtime.lastError);
-  });
+  // Navigate the CURRENT tab to the mpv: URL. This is exactly what typing the
+  // URL into the address bar does (which is confirmed working): the browser
+  // hands the URL to the registered OS handler and, because a handler exists,
+  // cancels the navigation -- so the YouTube page is NOT reloaded or replaced.
+  //
+  // Why not the previous tricks? An unfocused background tab has its
+  // external-app launch suppressed by Chrome, and a programmatically injected
+  // in-page click lacks the user activation Chrome requires -- both silently
+  // did nothing. A top-level navigation of the active tab does not.
+  chrome.tabs.update(tab.id, { url: target }, () => void chrome.runtime.lastError);
 });

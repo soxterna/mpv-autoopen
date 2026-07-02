@@ -150,9 +150,15 @@ you launched manually without the pipe), it just opens a fresh window.
      script receives is recorded there. If the file never gains a line, the
      `mpv:` handler isn’t reaching the script (re-run `install.ps1`). If it logs
      a line but mpv doesn’t start, it’s an mpv/yt-dlp issue (below).
-  > Earlier this tool briefly flashed a blank tab and did nothing — that was a
-  > bug (Chrome blocks external-app launches from background tabs). Fixed in
-  > extension **v1.1.0**; make sure you reloaded it.
+  > The context menu navigates the current tab to the `mpv:` URL — the same
+  > thing the address-bar test does — so the YouTube page stays put and mpv
+  > launches. (Earlier versions flashed a blank tab or injected an in-page click
+  > and silently failed; both are fixed in extension **v1.2.0** — make sure you
+  > reloaded it.)
+- **The menu item doesn’t appear when I right-click the video.** Right-clicking
+  directly on the YouTube *player* shows YouTube’s own menu, not the browser’s.
+  Right-click a **thumbnail/title link**, or an empty part of a `/watch` page,
+  instead.
 - **“mpv.exe not found”.** Set `$MpvPath` in `config.ps1` to the correct path
   (or re-run `install.ps1 -Force -MpvPath "..."`).
 - **YouTube plays but fails after a while / with errors.** Update yt-dlp:
